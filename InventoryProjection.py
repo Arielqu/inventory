@@ -33,8 +33,6 @@ def add_ending_quantity(merged_data, data):
     ending_quantity_per_sku.rename(columns={'product_variant_sku': 'Product Variant SKU'}, inplace=True)
     return pd.merge(merged_data, ending_quantity_per_sku, on='Product Variant SKU', how='left')
 
-def save_to_excel(data, file_name):
-    data.to_excel(file_name, index=False)
 
 def plot_quantity_sold_vs_sku(data):
     sorted_data = data.sort_values(by='Total Quantity Sold', ascending=False)
@@ -61,7 +59,7 @@ def plot_projected_ending_quantity(data):
 
 
     # Set the start date, number of months for the projection, and threshold
-    start_date = '2024-04-01'
+    start_date = '2024-01-04'
     months_for_projection = 3
     inventory_threshold = 2  # Months of inventory before considering it critical
     days_in_month = 30
@@ -115,15 +113,12 @@ def plot_projected_ending_quantity(data):
     plt.title('SKU Projected Ending Quantity Over Time with Incoming Orders')
     plt.legend()
     plt.show()
-
+    time_series_df.to_csv("projected_inventory.csv")
 
 
 # Main execution
 file_path = 'inventory_sales_2023-12-01_2023-12-31.csv'
 target_sale = 100000
-days_in_month = 30
-
-
 data = load_data(file_path)
 [sku_mapping, cost_price_mapping] = load_mappings('mapping.json')
 
@@ -133,7 +128,7 @@ data = add_ending_quantity(merged_data, data)
 plot_projected_ending_quantity(data)
 
 file_name = f'inventory_projection_{target_sale}.xlsx'
-save_to_excel(data, file_name)
+data.to_csv(file_name)
 plot_quantity_sold_vs_sku(data)
 
 # Optionally, display the merged DataFrame
