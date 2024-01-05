@@ -26,6 +26,12 @@ def merge_data_with_costs(quantity_table, cost_price_mapping):
 def add_ending_quantity(merged_data, data):
     # Filter out rows where 'product_variant_sku' contains 'BUN'
     filtered_data = data[~data['product_variant_sku'].str.contains('BUN', case=False, na=False)]
+    # Group by 'product_variant_sku' and filter out those groups with more than one unique 'ending_quantity'
+    groups_with_multiple_ending_quantities = filtered_data.groupby('product_variant_sku').filter(lambda x: x['ending_quantity'].nunique() > 1)
+
+    # Print the 'product_variant_sku' values that have multiple 'ending_quantity' entries
+    # print("SKUs with multiple ending quantities:")
+    # print(groups_with_multiple_ending_quantities['product_variant_sku'].unique())
 
     # Now perform the grouping and find the minimum 'ending_quantity' on the filtered data
     ending_quantity_per_sku = filtered_data.groupby('product_variant_sku')['ending_quantity'].min().reset_index()
@@ -46,31 +52,44 @@ def plot_quantity_sold_vs_sku(data):
     plt.show()
 
 def order_and_cost(data):
-    target_revenue = 100000
-    lead_time = 60
-    data['Total Cost'] = data['Total Quantity Sold'] * data['Cost']
-    data['Gross Revenue'] = data['Total Quantity Sold'] * data['Price']
+    target_revenue = 200000
+    lead_time = 30
+
+    # Calculations
+    data['Total Cost'] = (data['Total Quantity Sold'] * data['Cost']).round(0)
+    data['Gross Revenue'] = (data['Total Quantity Sold'] * data['Price']).round(0)
     total_current_cost = data['Total Cost'].sum()
     total_current_revenue = data['Gross Revenue'].sum()
-    scaling_factor = target_revenue / total_current_revenue
-    target_cost = scaling_factor * total_current_cost
+    scaling_factor = target_revenue / total_current_revenue if total_current_revenue != 0 else 0
+    target_cost = (scaling_factor * total_current_cost).round(0)
+
     # Add how many need to order
-    data['Target Sale Per Unit'] = data['Total Quantity Sold'] * scaling_factor
+    data['Target Sale Per Unit'] = (data['Total Quantity Sold'] * scaling_factor).round(0)
+
     # How much to purchase based on the ending quantity and incoming order
     df = pd.read_excel('order.xlsx') 
     incoming_orders = df[['SKU', 'Order Date', 'Order Amount']].dropna(subset=['SKU', 'Order Date'])
     incoming_orders['Order Amount'] = incoming_orders['Order Amount'].fillna(0)    
     incoming_orders.rename(columns={'SKU': 'Product Variant SKU'}, inplace=True)
 
-    data = data.merge(incoming_orders, on='Product Variant SKU',how='left')
+    data = data.merge(incoming_orders, on='Product Variant SKU', how='left')
     data['Incoming order'] = data['Order Amount'].fillna(0)
+    
     # Calculate Purchase Amount
-    data['Purchase Amount'] = (lead_time * data['Target Sale Per Unit'] / 30 - data['ending_quantity'] - data['Incoming order']).clip(lower=0)
-    data['Real Cost'] = data['Purchase Amount'] * data['Cost']
+    data['Purchase Amount'] = ((lead_time * data['Target Sale Per Unit'] / 30 - data['ending_quantity'] - data['Incoming order']).clip(lower=0)).round(0)
+    data['Real Cost'] = (data['Purchase Amount'] * data['Cost']).round(0)
     real_cost = data['Real Cost'].sum()
+
+    # Display totals
+    print(f"Total Current Cost: {total_current_cost}")
+    print(f"Total Current Revenue: {total_current_revenue}")
+    print(f"Target Revenue: {target_revenue}")
+    print(f"Target Cost: {target_cost}")
+    print(f"Real Cost: {real_cost}")
+
+    data.to_csv(f"order_and_revenue_{target_revenue}.csv")
+
     return data
-
-
 
 
 
@@ -148,7 +167,6 @@ def plot_projected_ending_quantity(data):
 
 # Main execution
 file_path = 'inventory_sales_2023-12-01_2023-12-31.csv'
-target_sale = 100000
 data = load_data(file_path)
 [sku_mapping, cost_price_mapping] = load_mappings('mapping.json')
 
@@ -157,13 +175,8 @@ merged_data = merge_data_with_costs(quantity_table, cost_price_mapping)
 data = add_ending_quantity(merged_data, data)
 # plot_projected_ending_quantity(data)
 
-file_name = f'inventory_projection_{target_sale}.csv'
-# data.to_csv(file_name)
 # plot_quantity_sold_vs_sku(data)
-new_data = order_and_cost(data)
+order_and_cost(data)
 
-# Optionally, display the merged DataFrame
-print(data)
 
-print(new_data)
-new_data.to_csv("purchase.csv")
+
