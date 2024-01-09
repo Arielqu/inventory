@@ -52,7 +52,7 @@ def plot_quantity_sold_vs_sku(data):
     plt.show()
 
 def order_and_cost(data):
-    target_revenue = 200000
+    target_revenue = 300000
     lead_time = 30
 
     # Calculations
@@ -167,6 +167,7 @@ def plot_projected_ending_quantity(data):
 
 # Main execution
 file_path = 'inventory_sales_2023-12-01_2023-12-31.csv'
+# file_path = 'inventory_sales_2023-11-01_2023-11-30.csv'
 data = load_data(file_path)
 [sku_mapping, cost_price_mapping] = load_mappings('mapping.json')
 
