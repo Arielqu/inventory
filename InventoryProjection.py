@@ -1,6 +1,20 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import json
+import os
+key = '0109'
+config = {
+    'start_date': '2024-01-09',
+    'months_for_projection': 3,
+    'inventory_threshold': 60,  # Days of inventory before considering it critical
+    'days_in_month': 30,
+    'target_revenue': 100000,
+    'lead_time': 30, #how many days it take to get the product
+    'print_level': 2,  # 0: Nothing 1. Print and save 2. Plot
+    'input_data_path':f"inventory_sales_2023-12-01_2024-01-09.csv",
+    'order_and_cost_file_name':f'order_and_cost_file_name_{key}',
+    'projection_file_name':f'projection_{key}'
+}
 
 def load_data(file_path):
     return pd.read_csv(file_path)
@@ -48,26 +62,25 @@ def plot_quantity_sold_vs_sku(data):
     plt.ylabel('Total Quantity Sold')
     plt.title('SKU vs Total Quantity Sold')
     plt.xticks(rotation=90)
-    plt.savefig('sku_vs_total_quantity_sold.png', bbox_inches='tight')
-    plt.show()
+    if (config['print_level'] > 0):
+        plt.savefig(f'{key}//sku_vs_total_quantity_sold.png', bbox_inches='tight')
+    if (config['print_level'] > 1):
+        plt.show()
 
 def order_and_cost(data):
-    target_revenue = 300000
-    lead_time = 30
-
     # Calculations
     data['Total Cost'] = (data['Total Quantity Sold'] * data['Cost']).round(0)
     data['Gross Revenue'] = (data['Total Quantity Sold'] * data['Price']).round(0)
     total_current_cost = data['Total Cost'].sum()
     total_current_revenue = data['Gross Revenue'].sum()
-    scaling_factor = target_revenue / total_current_revenue if total_current_revenue != 0 else 0
+    scaling_factor = config['target_revenue']/ total_current_revenue if total_current_revenue != 0 else 0
     target_cost = (scaling_factor * total_current_cost).round(0)
 
     # Add how many need to order
     data['Target Sale Per Unit'] = (data['Total Quantity Sold'] * scaling_factor).round(0)
 
     # How much to purchase based on the ending quantity and incoming order
-    df = pd.read_excel('order.xlsx') 
+    df = pd.read_excel('inputs//order.xlsx') 
     incoming_orders = df[['SKU', 'Order Date', 'Order Amount']].dropna(subset=['SKU', 'Order Date'])
     incoming_orders['Order Amount'] = incoming_orders['Order Amount'].fillna(0)    
     incoming_orders.rename(columns={'SKU': 'Product Variant SKU'}, inplace=True)
@@ -76,53 +89,45 @@ def order_and_cost(data):
     data['Incoming order'] = data['Order Amount'].fillna(0)
     
     # Calculate Purchase Amount
-    data['Purchase Amount'] = ((lead_time * data['Target Sale Per Unit'] / 30 - data['ending_quantity'] - data['Incoming order']).clip(lower=0)).round(0)
+    data['Purchase Amount'] = ((config['lead_time'] * data['Target Sale Per Unit']/30 - data['ending_quantity'] - data['Incoming order']).clip(lower=0)).round(0)
     data['Real Cost'] = (data['Purchase Amount'] * data['Cost']).round(0)
     real_cost = data['Real Cost'].sum()
 
-    # Display totals
-    print(f"Total Current Cost: {total_current_cost}")
-    print(f"Total Current Revenue: {total_current_revenue}")
-    print(f"Target Revenue: {target_revenue}")
-    print(f"Target Cost: {target_cost}")
-    print(f"Real Cost: {real_cost}")
-
-    data.to_csv(f"order_and_revenue_{target_revenue}.csv")
-
+    if (config['print_level']>0):
+        # Display totals
+        print(f"Total Current Cost: {total_current_cost}")
+        print(f"Total Current Revenue: {total_current_revenue}")
+        print(f"Target Revenue: { config['target_revenue']}")
+        print(f"Target Cost: {target_cost}")
+        print(f"Real Cost: {real_cost}")
+        data.to_csv(f"{key}//{config['order_and_cost_file_name']}_{ config['target_revenue']}.csv")
     return data
 
 
-
-
 def plot_projected_ending_quantity(data):
-    df = pd.read_excel('order.xlsx') 
+    df = pd.read_excel('inputs//order.xlsx') 
     # Extract relevant columns
     # Assuming 'Variant' corresponds to 'Product Variant SKU', 'Order Date' to 'date_arrive', and 'Order Amount' to 'order_quantity'
     incoming_orders = df[['SKU', 'Order Date', 'Order Amount']].dropna()
-
     # Rename columns to match your existing DataFrame structure
     incoming_orders.columns = ['Product Variant SKU', 'date_arrive', 'order_quantity']
 
     # Convert 'date_arrive' to datetime
     incoming_orders['date_arrive'] = pd.to_datetime(incoming_orders['date_arrive'])
 
-
     # Set the start date, number of months for the projection, and threshold
-    start_date = '2024-01-04'
-    months_for_projection = 3
-    inventory_threshold = 2  # Months of inventory before considering it critical
-    days_in_month = 30
-    total_days = months_for_projection * days_in_month
+
+    total_days = config['months_for_projection'] * 30
 
     # Generate date range
-    date_range = pd.date_range(start=start_date, periods=total_days)
+    date_range = pd.date_range(start=config['start_date'], periods=total_days)
 
     # Calculate daily sales rate
-    data['Daily Sales Rate'] = data['Total Quantity Sold'] / days_in_month
-    data['Months of Inventory'] = data['ending_quantity'] / data['Total Quantity Sold']
+    data['Daily Sales Rate'] = data['Total Quantity Sold'] / config['days_in_month']
+    data['Days of Inventory'] = data['ending_quantity'] / data['Daily Sales Rate']
 
     # Filter SKUs based on the threshold
-    filtered_data = data[data['Months of Inventory'] < inventory_threshold]
+    filtered_data = data[data['Days of Inventory'] < config['inventory_threshold']]
 
     # Initialize a dictionary for time series data
     time_series_data = {}
@@ -151,32 +156,30 @@ def plot_projected_ending_quantity(data):
 
     # Convert the dictionary to a DataFrame
     time_series_df = pd.DataFrame(time_series_data, index=date_range)
-
-    # Plotting
-    plt.figure(figsize=(15, 8))
-    for sku in time_series_data.keys():
-        plt.plot(time_series_df.index, time_series_df[sku], label=sku)
-
-    plt.xlabel('Date')
-    plt.ylabel('Projected Ending Quantity')
-    plt.title('SKU Projected Ending Quantity Over Time with Incoming Orders')
-    plt.legend()
-    # plt.show()
-    # time_series_df.to_csv("projected_inventory.csv")
-
+    if (config['print_level']>1):
+        # Plotting
+        plt.figure(figsize=(15, 8))
+        for sku in time_series_data.keys():
+            plt.plot(time_series_df.index, time_series_df[sku], label=sku)
+        plt.xlabel('Date')
+        plt.ylabel('Projected Ending Quantity')
+        plt.title('SKU Projected Ending Quantity Over Time with Incoming Orders')
+        plt.legend()
+        plt.show()
+        plt.savefig(f"{key}//{config['projection_file_name']}.png", bbox_inches='tight')
+    if (config['print_level']>0):    
+        time_series_df.to_csv(f"{key}//{config['projection_file_name']}.csv")
 
 # Main execution
-file_path = 'inventory_sales_2023-12-01_2023-12-31.csv'
-# file_path = 'inventory_sales_2023-11-01_2023-11-30.csv'
-data = load_data(file_path)
-[sku_mapping, cost_price_mapping] = load_mappings('mapping.json')
-
+if not os.path.exists(key):
+    os.makedirs(key)
+data = load_data(os.path.join('inputs',config['input_data_path']))
+[sku_mapping, cost_price_mapping] = load_mappings(os.path.join('inputs','mapping.json'))
 quantity_table = calculate_total_quantities(data, sku_mapping)
 merged_data = merge_data_with_costs(quantity_table, cost_price_mapping)
 data = add_ending_quantity(merged_data, data)
-# plot_projected_ending_quantity(data)
-
-# plot_quantity_sold_vs_sku(data)
+plot_quantity_sold_vs_sku(data)
+plot_projected_ending_quantity(data)
 order_and_cost(data)
 
 
