@@ -2,16 +2,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import json
 import os
-key = '0109'
+key = '08-12'
 config = {
-    'start_date': '2024-01-09',
+    'start_date': '2024-08-12',
     'months_for_projection': 3,
-    'inventory_threshold': 60,  # Days of inventory before considering it critical
-    'days_in_month': 30,
-    'target_revenue': 100000,
+    'inventory_threshold': 90,  # Days of inventory before considering it critical
+    'days_in_range': 30,
+    'target_revenue': 120000,
     'lead_time': 30, #how many days it take to get the product
     'print_level': 2,  # 0: Nothing 1. Print and save 2. Plot
-    'input_data_path':f"inventory_sales_2023-12-01_2024-01-09.csv",
+    'input_data_path':f"inventory_sales_2024-07-12_2024-08-10.csv",
     'order_and_cost_file_name':f'order_and_cost_file_name_{key}',
     'projection_file_name':f'projection_{key}'
 }
@@ -123,7 +123,7 @@ def plot_projected_ending_quantity(data):
     date_range = pd.date_range(start=config['start_date'], periods=total_days)
 
     # Calculate daily sales rate
-    data['Daily Sales Rate'] = data['Total Quantity Sold'] / config['days_in_month']
+    data['Daily Sales Rate'] = data['Total Quantity Sold'] / config['days_in_range']
     data['Days of Inventory'] = data['ending_quantity'] / data['Daily Sales Rate']
 
     # Filter SKUs based on the threshold
