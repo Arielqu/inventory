@@ -24,6 +24,8 @@
         "FBX-P": ["BUN-FBX-P", "BUN-FBX-P90", "FBX-P"],
         "FST-C":["FST-C","BUN-FST-C90"],
         "FST-N":["FST-N","BUN-FST-N90"],
+        "FL-C":["FL-C","BUN-FL-C90"],
+        "FL-N":["FL-N","BUN-FL-N90"],
         "F-BE90": ["F-BE90"],
         "F-CH90": ["F-CH90"],
         "F-DU90": ["F-DU90"],
@@ -35,22 +37,12 @@
             "BUN-B-PL90", "BUN-FBX-N90", "BUN-FBX-P90", "BUN-FBX-N90", "BUN-FBX-P90", "BUN-FD-N90",
             "BUN-FD-P90", "BUN-FD-N90", "BUN-FD-P90", "BUN-FDN-N90", "BUN-FDN-P90", "BUN-FDN-N90",
             "BUN-FDN-P90", "BUN-FS-NS90", "BUN-FS-NL90", "BUN-FS-PL90", "BUN-FS-PS90", "BUN-FS-PS90",
-            "BUN-FS-NS90", "BUN-FS-NL90", "BUN-FS-PL90","BUN-FST-C90","BUN-FST-N90"
+            "BUN-FS-NS90", "BUN-FS-NL90", "BUN-FS-PL90","BUN-FST-C90","BUN-FST-N90","BUN-FL-N","BUN-FL-C"
         ],
         "F-BE": ["F-BE"],
         "F-CH": ["F-CH"],
         "F-DU": ["F-DU"],
         "F-LI": ["F-DI"],
-        "F-MX": [
-            "F-MX", "BUN-FB-NL", "BUN-FB-NS", "BUN-FB-NXL", "BUN-FB-PS", "BUN-FB-PL",
-            "BUN-FB-NS", "BUN-FB-PS", "BUN-FB-NXL", "BUN-FB-PXL", "BUN-FB-PL", "BUN-FB-NL",
-            "BUN-B-PL", "BUN-B-NL", "BUN-B-PS", "BUN-B-BL", "BUN-B-BS", "BUN-B-NS",
-            "BUN-B-PS", "BUN-B-NS", "BUN-B-BS", "BUN-B-NL", "BUN-B-PL", "BUN-B-BL",
-            "BUN-FBX-P", "BUN-FBX-N", "BUN-FBX-N", "BUN-FBX-P", "BUN-FD-P", "BUN-FD-N",
-            "BUN-FD-N", "BUN-FD-P", "BUN-FDN-P", "BUN-FDN-N", "BUN-FDN-N", "BUN-FDN-P",
-            "BUN-FS-NS", "BUN-FS-PS", "BUN-FS-PL", "BUN-FS-NL", "BUN-FS-PS", "BUN-FS-NL",
-            "BUN-FS-NS", "BUN-FS-PL"
-        ],
         "F-PB": ["F-PB"]
     },
     "cost_price_mapping": {
@@ -88,6 +80,8 @@
         "F-MX": {"cost": 1.8, "price": 12.95},
         "F-PB": {"cost": 1.8, "price": 12.95},
         "FST-C": {"cost": 2.7, "price": 18.95},
-        "FST-N": {"cost": 2.7, "price": 18.95}
+        "FST-N": {"cost": 2.7, "price": 18.95},
+        "FL-N": {"cost": 3.65, "price": 22.95},
+        "FL-S": {"cost": 3.65, "price": 22.95}
     }
 }

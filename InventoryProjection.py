@@ -2,16 +2,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import json
 import os
-key = '08-12'
+key = '08-20-MORE'
 config = {
-    'start_date': '2024-08-12',
+    'start_date': '2024-08-20',
     'months_for_projection': 3,
     'inventory_threshold': 90,  # Days of inventory before considering it critical
-    'days_in_range': 30,
-    'target_revenue': 120000,
+    'days_in_range': 90,
+    'target_revenue': 300000,
     'lead_time': 30, #how many days it take to get the product
     'print_level': 2,  # 0: Nothing 1. Print and save 2. Plot
-    'input_data_path':f"inventory_sales_2024-07-12_2024-08-10.csv",
+    'input_data_path':f"inventory_sales_2024-05-22_2024-08-19.csv",
+    'new_data_path':f"TotalAvailableInventory.csv",
     'order_and_cost_file_name':f'order_and_cost_file_name_{key}',
     'projection_file_name':f'projection_{key}'
 }
@@ -52,6 +53,41 @@ def add_ending_quantity(merged_data, data):
     ending_quantity_per_sku.to_csv('ending_quantity')
     ending_quantity_per_sku.rename(columns={'product_variant_sku': 'Product Variant SKU'}, inplace=True)
     return pd.merge(merged_data, ending_quantity_per_sku, on='Product Variant SKU', how='left')
+
+def replace_ending_quantity(original_data, new_data_path):
+    # Load the new Excel file
+    new_data = pd.read_csv(new_data_path)
+
+    # Filter the new data to only include rows where "Primary Supplier" is "FreezBone"
+    new_data = new_data[new_data['Primary Supplier'] == 'FreezBone']
+    
+    
+    # Ensure the SKU column in the new data matches with the Product Variant SKU in the original data
+    new_data.rename(columns={'SKU': 'Product Variant SKU', 'Available Quantity': 'new_ending_quantity'}, inplace=True)
+    
+    # Initialize a list for missing SKUs
+    missing_skus = []
+    
+    # Iterate through each row in the original data
+    for index, row in original_data.iterrows():
+        sku = row['Product Variant SKU']
+        
+        # Check if this SKU exists in the new data
+        if sku in new_data['Product Variant SKU'].values:
+            # If found, update the ending_quantity with the new value
+            new_quantity = new_data.loc[new_data['Product Variant SKU'] == sku, 'new_ending_quantity'].values[0]
+            original_data.at[index, 'ending_quantity'] = new_quantity
+        else:
+            # If not found, log the missing SKU
+            missing_skus.append(sku)
+    
+    # Print out the SKUs that were not found in the new data
+    if missing_skus:
+        print("The following SKUs were not found in the new data:")
+        for missing_sku in missing_skus:
+            print(missing_sku)
+    
+    return original_data
 
 
 def plot_quantity_sold_vs_sku(data):
@@ -178,6 +214,7 @@ data = load_data(os.path.join('inputs',config['input_data_path']))
 quantity_table = calculate_total_quantities(data, sku_mapping)
 merged_data = merge_data_with_costs(quantity_table, cost_price_mapping)
 data = add_ending_quantity(merged_data, data)
+data = replace_ending_quantity(merged_data, os.path.join('inputs',config['new_data_path']))
 plot_quantity_sold_vs_sku(data)
 plot_projected_ending_quantity(data)
 order_and_cost(data)
