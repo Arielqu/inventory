@@ -2,17 +2,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import json
 import os
-key = '08-22-most'
+key = '08-26'
 config = {
-    'start_date': '2024-08-22',
+    'start_date': '2024-08-26',
     'months_for_projection': 3,
     'inventory_threshold': 90,  # Days of inventory before considering it critical
-    'days_in_range': 90,
+    'days_in_range': 7,
     'target_revenue': 500000,
-    'lead_time': 30, #how many days it take to get the product
+    'lead_time': 60, #how many days it take to get the product
     'print_level': 2,  # 0: Nothing 1. Print and save 2. Plot
-    'input_data_path':f"inventory_sales_2024-05-22_2024-08-19.csv",
-    'new_data_path':f"TotalAvailableInventory-2024-08-22_13-26-35.csv",
+    'input_data_path':f"inventory_sales_2024-08-20_2024-08-26.csv",
+    'new_data_path':f"TotalAvailableInventory-8-27.csv",
     'order_and_cost_file_name':f'order_and_cost_file_name_{key}',
     'projection_file_name':f'projection_{key}'
 }
@@ -59,7 +59,7 @@ def replace_ending_quantity(original_data, new_data_path):
     new_data = pd.read_csv(new_data_path)
 
     # Filter the new data to only include rows where "Primary Supplier" is "FreezBone"
-    # new_data = new_data[new_data['Primary Supplier'] == 'FreezBone']
+    new_data = new_data[new_data['Primary Supplier'] == 'FreezBone']
     
     
     # Ensure the SKU column in the new data matches with the Product Variant SKU in the original data
