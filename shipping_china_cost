@@ -1,0 +1,81 @@
+# Product weights in grams and conversion to pounds (1 gram = 0.00220462 pounds)
+products = {
+    "Freezbone Brown / Large": 98,
+    "Freezbone Brown / Small": 78,
+    "Freezbone Navy / Large": 98,
+    "Freezbone Navy / Small": 78,
+    "Freezbone Purple / Large": 98,
+    "Freezbone Purple / Small": 78,
+    "Freezball Navy / XL Large": 283,
+    "Freezball Navy / Large": 127,
+    "Freezball Navy / Small": 100,
+    "Freezball Purple / XL Large": 283,
+    "Freezball Purple / Large": 127,
+    "Freezball Purple / Small": 100,
+    "Freez Double Navy": 219,
+    "Freez Double Purple": 219,
+    "Freez Doughnut Navy": 190,
+    "Freez Doughnut Purple": 190,
+    "Freezstick Navy / Large": 395,
+    "Freezstick Navy / Small": 362,
+    "Freezstick Purple / Large": 395,
+    "Freezstick Purple / Small": 362,
+    "Freezbox Navy": 378,
+    "Freezbox Purple": 378,
+    "Freezstar Navy": 236,
+    "Freezstar Coral": 236,
+    "Freezlava Navy": 402,
+    "Freezlava Coral": 402,
+    "Freeztree": 180,
+    "Freez GingerBread": 290
+}
+
+# Shipping rates (weight brackets in pounds)
+shipping_rates = [
+    (0, 0.249, 4.78), (0.25, 0.49, 6.02), (0.5, 0.749, 7.65), (0.75, 0.99, 9.12), (1, 1.249, 10.71), 
+    (1.25, 1.49, 12.30), (1.5, 1.749, 12.68), (1.75, 1.99, 14.27), (2, 2.249, 15.86), (2.25, 2.49, 17.45), 
+    (2.5, 2.749, 19.03), (2.75, 2.99, 20.62), (3, 3.249, 22.21), (3.25, 3.49, 23.80), (3.5, 3.749, 25.39), 
+    (3.75, 3.99, 26.98), (4, 4.249, 28.57), (4.25, 4.49, 28.69), (4.5, 4.749, 29.14), (4.75, 4.99, 30.59), 
+    (5, 5.249, 32.04), (5.25, 5.49, 33.49), (5.5, 5.749, 34.94), (5.75, 5.99, 36.39), (6, 6.249, 37.85), 
+    (6.25, 6.49, 39.30), (6.5, 6.749, 40.75), (6.75, 6.99, 42.20), (7, 7.249, 43.65), (7.25, 7.49, 45.10),
+    (7.5, 7.749, 46.56), (7.75, 7.99, 48.01), (8, 8.249, 49.46), (8.25, 8.49, 50.91), (8.5, 8.749, 52.36), 
+    (8.75, 8.99, 53.81), (9, 9.249, 55.26), (9.25, 9.49, 56.72), (9.5, 9.749, 58.17), (9.75, 9.99, 59.62), 
+    (10, 10.249, 61.07), (10.25, 10.49, 62.52), (10.5, 10.749, 63.97), (10.75, 10.99, 65.43), (11, 11.249, 66.88), 
+    (11.25, 11.49, 68.33), (11.5, 11.749, 69.78), (11.75, 11.99, 71.23), (12, 12.249, 72.68), (12.25, 12.49, 74.14), 
+    (12.5, 12.749, 75.59), (12.75, 12.99, 77.04), (13, 13.249, 78.49), (13.25, 13.49, 79.94), (13.5, 13.749, 81.39), 
+    (13.75, 13.99, 82.84), (14, 14.249, 84.30), (14.25, 14.49, 85.75), (14.5, 14.749, 87.20), (14.75, 14.99, 88.65)
+]
+
+# Conversion factor from grams to pounds
+grams_to_pounds = 0.00220462
+
+# Convert product weights to pounds
+products_in_pounds = {product: weight * grams_to_pounds for product, weight in products.items()}
+
+# Function to find the shipping cost based on weight in pounds
+def find_shipping_cost(weight):
+    for lower_bound, upper_bound, cost in shipping_rates:
+        if lower_bound <= weight <= upper_bound:
+            return cost
+    return None
+
+# Function to calculate shipping costs for one, two, and three products
+def calculate_shipping_costs(products_in_pounds):
+    from itertools import combinations
+
+    results = {}
+    for i in range(1, 4):  # For one, two, and three products
+        results[i] = []
+        for combo in combinations(products_in_pounds.keys(), i):
+            total_weight = sum(products_in_pounds[product] for product in combo)
+            cost = find_shipping_cost(total_weight)
+            results[i].append((combo, total_weight, cost))
+
+    return results
+
+# Calculate the shipping costs
+shipping_costs = calculate_shipping_costs(products_in_pounds)
+
+import ace_tools as tools; tools.display_dataframe_to_user(name="Shipping Cost for Products", dataframe=shipping_costs)
+
+shipping_costs

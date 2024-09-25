@@ -3,18 +3,18 @@ import matplotlib.pyplot as plt
 import json
 import os
 
-key = '09-01'
+key = '09-24'
 config = {
-    'start_date': '2024-09-01',
+    'start_date': '2024-09-24',
     'months_for_projection': 3,
     'inventory_threshold': 90,  # Days of inventory before considering it critical
-    'days_in_range': 7,
-    'target_revenue': 500000,
+    'days_in_range': 30,
+    'target_revenue': 100000,
     'lead_time': 60, #how many days it take to get the product
     'print_level': 2,  # 0: Nothing 1. Print and save 2. Plot
-    'input_data_path':f"inventory_sales_2024-08-25_2024-08-31.csv",
-    'new_data_path':f"TotalAvailableInventory-0901.csv",
-    'recent_sales_data_path': f'inventory_sales_2024-08-30.csv',
+    'input_data_path':f"inventory_sales_2024-08-19_2024-09-17.csv",
+    'new_data_path':f"InventoryQuantitiesByWarehouse-9-24.csv",
+    'recent_sales_data_path': f'inventory_sales_2024-09-11_2024-09-17.csv',
     'order_and_cost_file_name':f'order_and_cost_file_name_{key}',
     'projection_file_name':f'projection_{key}'
 }
@@ -48,7 +48,8 @@ def add_ending_quantity(merged_data, data):
 def replace_ending_quantity(original_data, new_data_path):
     new_data = pd.read_csv(new_data_path)
     new_data = new_data[new_data['Primary Supplier'] == 'FreezBone']
-    new_data.rename(columns={'SKU': 'Product Variant SKU', 'Available Quantity': 'new_ending_quantity'}, inplace=True)
+    # new_data.rename(columns={'SKU': 'Product Variant SKU', 'Available Quantity': 'new_ending_quantity'}, inplace=True)
+    new_data.rename(columns={'SKU': 'Product Variant SKU', 'Total': 'new_ending_quantity'}, inplace=True)
     
     missing_skus = []
     
@@ -164,7 +165,7 @@ quantity_table = calculate_total_quantities(data, sku_mapping)
 merged_data = merge_data_with_costs(quantity_table, cost_price_mapping)
 data = add_ending_quantity(merged_data, data)
 data = replace_ending_quantity(merged_data, os.path.join('inputs',config['new_data_path']))
-data = deduct_recent_sale(data)
+# data = deduct_recent_sale(data)
 
 # Plot and analyze data
 plot_projected_ending_quantity(data)
